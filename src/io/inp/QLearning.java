@@ -40,20 +40,18 @@ public class QLearning {
     private State currentState;
 
     private int episodes;
-    private int explore;
 
     private double final_epsilon;
     private double annealRate;
 
     private double alpha = 0.5;
 
-    public QLearning( double init_epsilon, double final_epsilon, int explore, int episodes, double gamma) {
+    public QLearning( double init_epsilon, double final_epsilon, int episodes, double gamma) {
 
         this.epsilon = Math.min( Math.max( 0, init_epsilon ), 1 ); // Constrain epsilon, 0 <= epsilon <= 1 ;
         this.final_epsilon = Math.min( Math.max( 0, final_epsilon ), 1 );
         this.episodes = Math.min( Math.max( 0, episodes ), 100000000 );
 
-        this.explore = Math.min( Math.max( 5000, explore ), this.episodes );
 
         this.annealRate = ( this.epsilon - this.final_epsilon ) / this.episodes;
 
@@ -67,7 +65,7 @@ public class QLearning {
         this.rValues = new LinkedHashMap<>();
 
         for( State s : State.values() ){
-            this.rValues.put( s, -0.05 );
+            this.rValues.put( s, 0.0 );
 
             LinkedHashMap< Action, Double > actionQ = new LinkedHashMap<>();
             for( Action a : Action.values() ) {
@@ -97,29 +95,28 @@ public class QLearning {
                     // Action Selection
                     double rand = random.nextDouble();
                     Action a;
-                    if ( i > this.explore && rand >= this.epsilon) {
+
+                    if ( rand >= this.epsilon ) {
                         // Exploitation
                         a = selectActionMax(this.currentState);
                     } else {
                         // Exploration
-                        a = selectActionAtRandom(); // Ensure we have sufficient exploration before following sub-optimal policies.
+                        a = selectActionAtRandom();
                     }
 
-                    State nextS = stateLinks.get( this.currentState ).get( a );
-                    double currentQ = qValues.get( this.currentState ).get( a );
+                    State nextS = stateLinks.get( this.currentState ).get( a ); // s'
+                    double currentQ = qValues.get( this.currentState ).get( a ); // Q( s, a )
 
-                    double maxQValue = Collections.max( qValues.get( nextS ).values() ); // Get the max Q value from next State.
-                    double immediateReward = rValues.get( nextS );
+                    double maxQValue = Collections.max( qValues.get( nextS ).values() ); // max a't+1 Q( s', a' )
+                    double immediateReward = rValues.get( nextS ); // r t+1
 
+                    // Q( s, a ) <- Q( s, a ) + alpha( rt+1 + gamma * maxa't+1 Q( s', a' ) - Q( s, a ) );
                     double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
                     setQ( this.currentState, a, updatedQ );
 
-                    this.currentState = nextS;
+                    annealEpsilon();
 
-                    // Only anneal if we're out of the initial exploration stages.
-                    if( i > this.explore ) {
-                        annealEpsilon();
-                    }
+                    this.currentState = nextS; // s <- s'
                 }
 
                 if( i % 10000 == 0 ){ // Every X episodes.
