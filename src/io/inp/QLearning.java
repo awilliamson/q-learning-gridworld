@@ -157,6 +157,7 @@ public class QLearning {
             }
         } );
 
+        // If two Q( s, a ) are equal randomly choose a from an array of the maxa Q( s, a ).
         return actionArray.get( random.nextInt( actionArray.size() ) );
 
     }
