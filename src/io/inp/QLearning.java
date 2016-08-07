@@ -33,7 +33,7 @@ public class QLearning {
     private LinkedHashMap< State, LinkedHashMap< Action, Double > > qValues;
 
     // Immediate Reward Values for State S. Rt
-    private LinkedHashMap< State, Double > rValues;
+    private LinkedHashMap< State, LinkedHashMap< Action, Double > > rValues;
 
     private Random random;
     final private State startState = State.D;
@@ -64,16 +64,29 @@ public class QLearning {
         this.rValues = new LinkedHashMap<>();
 
         for( State s : State.values() ){
-            this.rValues.put( s, 0.0 ); // Immediate rewards for all Q( s, a ) initialised to 0.
+            //this.rValues.put( s, 0.0 ); // Immediate rewards for all Q( s, a ) initialised to 0.
 
             LinkedHashMap< Action, Double > actionQ = new LinkedHashMap<>();
+            LinkedHashMap< Action, Double > reward = new LinkedHashMap<>();
             for( Action a : Action.values() ) {
                 actionQ.put( a, 0.0 ); // Initialise Q( s, a ) arbitrarily
+
+                // Relate Q( s, a ) with immediate rewards.
+                // Movement between non-terminal tiles = 0
+                // Any action a in state C will produce +1 immediate reward.
+                // Any action a in state I will produce -1 immediate reward.
+
+                if( s.equals( State.C ) ){
+                    reward.put( a, 1.0 );
+                }else if( s.equals( State.I ) ){
+                    reward.put( a, -1.0 );
+                }else{
+                    reward.put( a, 0.0 );
+                }
             }
             this.qValues.put( s, actionQ );
+            this.rValues.put( s, reward );
         }
-        this.rValues.put( State.C, 1.0 ); // Specific rewards for reaching terminal states. +1 for Goal.
-        this.rValues.put( State.I, -1.0 ); // And -1 for a bad State.
 
         this.currentState = this.startState;
 
@@ -110,7 +123,9 @@ public class QLearning {
                     double currentQ = qValues.get( this.currentState ).get( a ); // Q( s, a )
 
                     double maxQValue = Collections.max( qValues.get( nextS ).values() ); // max a't+1 Q( s', a' )
-                    double immediateReward = rValues.get( nextS ); // r t+1
+
+                    //Get the immediate award of transitioning from the current state, given the chosen action.
+                    double immediateReward = rValues.get(this.currentState).get( a ); // r t+1
 
                     // Q( s, a ) <- Q( s, a ) + alpha( rt+1 + gamma * maxa't+1 Q( s', a' ) - Q( s, a ) );
                     double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
