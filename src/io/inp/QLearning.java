@@ -88,7 +88,9 @@ public class QLearning {
             for( int i = 0; i < this.episodes; ++i ) {
 
                 this.currentState = this.startState;
-                while ( this.currentState != State.C && this.currentState != State.I ) { // Account for terminal states.
+                Boolean terminal = false;
+                //while ( this.currentState != State.C && this.currentState != State.I ) { // Account for terminal states.
+                do{
                     // Epsilon-Greedy
                     // Action Selection
                     double rand = random.nextDouble();
@@ -117,8 +119,18 @@ public class QLearning {
                     annealEpsilon(); // This allows for the slow transition from more exploration to more exploitation
                     // As we wish to begin exploiting once we have enough exploration done.
 
+                    // S = Terminal State.
+                    // This allows terminal State Q values to be calculated, by selecting an action when on a terminal
+                    // State. As all terminal states lead back to themselves, this checks if you are.
+                    // A) NextS is a terminal State. ( Always the case when currentState is C or I ).
+                    // B) Made an action A, which leads back to the current state.
+                    if( ( nextS.equals( State.C ) || nextS.equals( State.I ) ) && this.currentState.equals( nextS ) ){
+                        terminal = true;
+                    }
+
                     this.currentState = nextS; // s <- s'
                 }
+                while( !terminal );
 
                 if( i % 10000 == 0 ){ // Every X episodes.
                     System.out.println( "Current Episode: " + i );
@@ -126,8 +138,6 @@ public class QLearning {
                     printPolicy();
                 }
             }
-
-            this.isRunning = false;
         }
     }
 
