@@ -10,8 +10,8 @@ public class QLearning {
     private double epsilon; // Probability of exploration and ( 1 - epsilon ) for exploitation.
 
     // Starting location is D,
-    // Goal state is C with an immediate reward of +100.
-    // Terminal state I is a -100 immediate reward tile.
+    // Goal state is C.
+    // Terminal state I.
     public enum State {
         A, B, C,
         D, E, F,
@@ -33,7 +33,7 @@ public class QLearning {
     private LinkedHashMap< State, LinkedHashMap< Action, Double > > qValues;
 
     // Immediate Reward Values for State S. Rt
-    private LinkedHashMap< State, LinkedHashMap< Action, Double > > rValues;
+    private LinkedHashMap< State, Double > rValues;
 
     private Random random;
     final private State startState = State.D;
@@ -64,34 +64,23 @@ public class QLearning {
         this.rValues = new LinkedHashMap<>();
 
         for( State s : State.values() ){
-            //this.rValues.put( s, 0.0 ); // Immediate rewards for all Q( s, a ) initialised to 0.
+            this.rValues.put( s, 0.0 ); // Immediate rewards for all states initialised to 0.
 
             LinkedHashMap< Action, Double > actionQ = new LinkedHashMap<>();
-            LinkedHashMap< Action, Double > reward = new LinkedHashMap<>();
             for( Action a : Action.values() ) {
                 actionQ.put( a, 0.0 ); // Initialise Q( s, a ) arbitrarily
-
-                // Relate Q( s, a ) with immediate rewards.
-                // Movement between non-terminal tiles = 0
-                // Any action a in state C will produce +1 immediate reward.
-                // Any action a in state I will produce -1 immediate reward.
-
-                if( s.equals( State.C ) ){
-                    reward.put( a, 1.0 );
-                }else if( s.equals( State.I ) ){
-                    reward.put( a, -1.0 );
-                }else{
-                    reward.put( a, 0.0 );
-                }
             }
+
             this.qValues.put( s, actionQ );
-            this.rValues.put( s, reward );
         }
+
+        // Set rewards for reaching terminal states.
+        this.rValues.put( State.C, 1.0 );
+        this.rValues.put( State.I, -1.0 );
 
         this.currentState = this.startState;
 
         setupGridWorld();
-
     }
 
     public void run(){
@@ -101,9 +90,8 @@ public class QLearning {
             for( int i = 0; i < this.episodes; ++i ) {
 
                 this.currentState = this.startState;
-                Boolean terminal = false;
-                //while ( this.currentState != State.C && this.currentState != State.I ) { // Account for terminal states.
-                do{
+
+                while ( this.currentState != State.C && this.currentState != State.I ) { // Account for terminal states.
                     // Epsilon-Greedy
                     // Action Selection
                     double rand = random.nextDouble();
@@ -125,7 +113,7 @@ public class QLearning {
                     double maxQValue = Collections.max( qValues.get( nextS ).values() ); // max a't+1 Q( s', a' )
 
                     //Get the immediate award of transitioning from the current state, given the chosen action.
-                    double immediateReward = rValues.get(this.currentState).get( a ); // r t+1
+                    double immediateReward = rValues.get( nextS );
 
                     // Q( s, a ) <- Q( s, a ) + alpha( rt+1 + gamma * maxa't+1 Q( s', a' ) - Q( s, a ) );
                     double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
@@ -134,20 +122,10 @@ public class QLearning {
                     annealEpsilon(); // This allows for the slow transition from more exploration to more exploitation
                     // As we wish to begin exploiting once we have enough exploration done.
 
-                    // S = Terminal State.
-                    // This allows terminal State Q values to be calculated, by selecting an action when on a terminal
-                    // State. As all terminal states lead back to themselves, this checks if you are.
-                    // A) NextS is a terminal State. ( Always the case when currentState is C or I ).
-                    // B) Made an action A, which leads back to the current state.
-                    if( ( nextS.equals( State.C ) || nextS.equals( State.I ) ) && this.currentState.equals( nextS ) ){
-                        terminal = true;
-                    }
-
                     this.currentState = nextS; // s <- s'
                 }
-                while( !terminal );
 
-                if( i % 10000 == 0 ){ // Every X episodes.
+                if( i % 1000 == 0 ){ // Every X episodes.
                     System.out.println( "Current Episode: " + i );
                     printMaxQValues();
                     printPolicy();
