@@ -44,18 +44,20 @@ public class QLearning {
     private double final_epsilon;
     private double annealRate;
 
-    private double alpha = 0.5;
+    private double alpha;
 
-    public QLearning( double init_epsilon, double final_epsilon, int episodes, double gamma) {
+    public QLearning( double init_epsilon, double final_epsilon, int episodes, double alpha, double gamma ) {
 
         this.epsilon = Math.min( Math.max( 0, init_epsilon ), 1 ); // Constrain epsilon, 0 <= epsilon <= 1 ;
+        
         this.final_epsilon = Math.min( Math.max( 0, final_epsilon ), 1 );
         this.episodes = Math.min( Math.max( 0, episodes ), 100000000 );
 
 
         this.annealRate = ( this.epsilon - this.final_epsilon ) / this.episodes;
 
-        this.gamma = Math.min( Math.max( 0, gamma ), 1 ); // Constrain alpha within 0 <= alpha <= 1
+        this.alpha = Math.min( Math.max( 0, alpha ), 1 ); // Constrain alpha within 0 <= alpha <= 1
+        this.gamma = Math.min( Math.max( 0, gamma ), 1 ); // Constrain gamma within 0 <= alpha <= 1
 
 
 
