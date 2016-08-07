@@ -250,7 +250,7 @@ public class QLearning {
         stateTransfers = new LinkedHashMap< Action, State >();
         stateTransfers.put( Action.UP, State.D );
         stateTransfers.put( Action.DOWN, State.G );
-        stateTransfers.put( Action.LEFT, State.D );
+        stateTransfers.put( Action.LEFT, State.G );
         stateTransfers.put( Action.RIGHT, State.H );
 
         stateLinks.put( State.G, stateTransfers );
