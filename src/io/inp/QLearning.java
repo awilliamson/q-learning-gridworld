@@ -110,12 +110,12 @@ public class QLearning {
                     State nextS = stateLinks.get( this.currentState ).get( a ); // s'
                     double currentQ = qValues.get( this.currentState ).get( a ); // Q( s, a )
 
-                    double maxQValue = Collections.max( qValues.get( nextS ).values() ); // max a't+1 Q( s', a' )
+                    double maxQValue = Collections.max( qValues.get( nextS ).values() ); // max a' Q( s', a' )
 
                     //Get the immediate award of transitioning from the current state, given the chosen action.
                     double immediateReward = rValues.get( nextS );
 
-                    // Q( s, a ) <- Q( s, a ) + alpha( rt+1 + gamma * maxa't+1 Q( s', a' ) - Q( s, a ) );
+                    // Q( s, a ) <- Q( s, a ) + alpha( rt+1 + gamma * maxa' Q( s', a' ) - Q( s, a ) );
                     double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
                     setQ( this.currentState, a, updatedQ );
 
