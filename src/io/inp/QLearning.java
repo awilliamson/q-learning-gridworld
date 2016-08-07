@@ -45,6 +45,8 @@ public class QLearning {
     private double final_epsilon;
     private double annealRate;
 
+    private double alpha = 0.5;
+
     public QLearning( double init_epsilon, double final_epsilon, int explore, int episodes, double gamma) {
 
         this.epsilon = Math.min( Math.max( 0, init_epsilon ), 1 ); // Constrain epsilon, 0 <= epsilon <= 1 ;
@@ -65,15 +67,16 @@ public class QLearning {
         this.rValues = new LinkedHashMap<>();
 
         for( State s : State.values() ){
-            this.rValues.put( s, 0.0 );
-            LinkedHashMap< Action, Double > expectedRewards = new LinkedHashMap<>();
+            this.rValues.put( s, -0.05 );
+
+            LinkedHashMap< Action, Double > actionQ = new LinkedHashMap<>();
             for( Action a : Action.values() ) {
-                expectedRewards.put( a, 0.0 ); // For each direction, initialise expected Rewards to 0.
+                actionQ.put( a, 0.0 ); // For each direction, initialise expected Rewards to 0.
             }
-            this.qValues.put( s, expectedRewards );
+            this.qValues.put( s, actionQ );
         }
-        this.rValues.put( State.C, 100.0 );
-        this.rValues.put( State.I, -100.0 );
+        this.rValues.put( State.C, 1.0 );
+        this.rValues.put( State.I, -1.0 );
 
         this.currentState = this.startState;
 
@@ -103,12 +106,12 @@ public class QLearning {
                     }
 
                     State nextS = stateLinks.get( this.currentState ).get( a );
-                    //double currentQ = qValues.get( this.currentState ).get( a );
+                    double currentQ = qValues.get( this.currentState ).get( a );
 
                     double maxQValue = Collections.max( qValues.get( nextS ).values() ); // Get the max Q value from next State.
                     double immediateReward = rValues.get( nextS );
 
-                    double updatedQ = immediateReward + ( this.gamma * maxQValue );
+                    double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
                     setQ( this.currentState, a, updatedQ );
 
                     this.currentState = nextS;
@@ -137,6 +140,9 @@ public class QLearning {
     private void annealEpsilon(){
         if( this.epsilon > this.final_epsilon ) {
             this.epsilon -= this.annealRate;
+        }
+        if( this.alpha - ( 0.5 / this.episodes ) > 0 ) {
+            this.alpha -= ( 0.5 / this.episodes );
         }
     }
 
