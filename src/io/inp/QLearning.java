@@ -4,8 +4,6 @@ import java.util.*;
 
 public class QLearning {
 
-    private boolean isRunning;
-
     private double gamma; // Discount Factor
     private double epsilon; // Probability of exploration and ( 1 - epsilon ) for exploitation.
 
@@ -32,11 +30,11 @@ public class QLearning {
     // Used in calculating maxQ( s, a ) for updating Q Value.
     private LinkedHashMap< State, LinkedHashMap< Action, Double > > qValues;
 
-    // Immediate Reward Values for State S. Rt
+    // Immediate Reward Values for State St. Rt
     private LinkedHashMap< State, Double > rValues;
 
     private Random random;
-    final private State startState = State.D;
+    final private State startState;
     private State currentState;
 
     private int episodes;
@@ -47,6 +45,8 @@ public class QLearning {
     private double alpha;
 
     public QLearning( double init_epsilon, double final_epsilon, int episodes, double alpha, double gamma ) {
+
+        this.startState = State.D;
 
         this.epsilon = Math.min( Math.max( 0, init_epsilon ), 1 ); // Constrain epsilon, 0 <= epsilon <= 1 ;
 
@@ -84,52 +84,49 @@ public class QLearning {
     }
 
     public void run(){
-        if( !this.isRunning ){
-            this.isRunning = true;
 
-            for( int i = 0; i < this.episodes; ++i ) {
+        for( int i = 0; i < this.episodes; ++i ) {
 
-                this.currentState = this.startState;
+            this.currentState = this.startState;
 
-                while ( this.currentState != State.C && this.currentState != State.I ) { // Account for terminal states.
-                    // Epsilon-Greedy
-                    // Action Selection
-                    double rand = random.nextDouble();
-                    Action a;
+            while ( this.currentState != State.C && this.currentState != State.I ) { // Account for terminal states.
+                // Epsilon-Greedy
+                // Action Selection
+                double rand = random.nextDouble();
+                Action a;
 
-                    if ( rand >= this.epsilon ) {
-                        // Exploitation
-                        // P( 1 - Epsilon )
-                        a = selectActionMax(this.currentState);
-                    } else {
-                        // Exploration
-                        // P( Epsilon )
-                        a = selectActionAtRandom();
-                    }
-
-                    State nextS = stateLinks.get( this.currentState ).get( a ); // s'
-                    double currentQ = qValues.get( this.currentState ).get( a ); // Q( s, a )
-
-                    double maxQValue = Collections.max( qValues.get( nextS ).values() ); // max a' Q( s', a' )
-
-                    //Get the immediate award of transitioning from the current state, given the chosen action.
-                    double immediateReward = rValues.get( nextS );
-
-                    // Q( s, a ) <- Q( s, a ) + alpha( rt+1 + gamma * maxa' Q( s', a' ) - Q( s, a ) );
-                    double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
-                    setQ( this.currentState, a, updatedQ );
-
-                    annealEpsilon(); // This allows for the slow transition from more exploration to more exploitation
-                    // As we wish to begin exploiting once we have enough exploration done.
-
-                    this.currentState = nextS; // s <- s'
+                if ( rand >= this.epsilon ) {
+                    // Exploitation
+                    // P( 1 - Epsilon )
+                    a = selectActionMax(this.currentState);
+                } else {
+                    // Exploration
+                    // P( Epsilon )
+                    a = selectActionAtRandom();
                 }
 
-                if( i % 1000 == 0 ){ // Every X episodes.
-                    System.out.println( "Current Episode: " + i );
-                    printMaxQValues();
-                    printPolicy();
-                }
+                State nextS = stateLinks.get( this.currentState ).get( a ); // s'
+                double currentQ = qValues.get( this.currentState ).get( a ); // Q( s, a )
+
+                double maxQValue = Collections.max( qValues.get( nextS ).values() ); // max a' Q( s', a' )
+
+                //Get the immediate award of transitioning from the current state, given the chosen action.
+                double immediateReward = rValues.get( nextS );
+
+                // Q( s, a ) <- Q( s, a ) + alpha( rt+1 + gamma * maxa' Q( s', a' ) - Q( s, a ) );
+                double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
+                setQ( this.currentState, a, updatedQ );
+
+                annealEpsilon(); // This allows for the slow transition from more exploration to more exploitation
+                // As we wish to begin exploiting once we have enough exploration done.
+
+                this.currentState = nextS; // s <- s'
+            }
+
+            if( i % 1000 == 0 ){ // Every X episodes.
+                System.out.println( "Current Episode: " + i );
+                printMaxQValues();
+                printPolicy();
             }
         }
     }
