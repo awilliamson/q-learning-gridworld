@@ -49,17 +49,14 @@ public class QLearning {
     public QLearning( double init_epsilon, double final_epsilon, int episodes, double alpha, double gamma ) {
 
         this.epsilon = Math.min( Math.max( 0, init_epsilon ), 1 ); // Constrain epsilon, 0 <= epsilon <= 1 ;
-        
+
         this.final_epsilon = Math.min( Math.max( 0, final_epsilon ), 1 );
         this.episodes = Math.min( Math.max( 0, episodes ), 100000000 );
-
 
         this.annealRate = ( this.epsilon - this.final_epsilon ) / this.episodes;
 
         this.alpha = Math.min( Math.max( 0, alpha ), 1 ); // Constrain alpha within 0 <= alpha <= 1
         this.gamma = Math.min( Math.max( 0, gamma ), 1 ); // Constrain gamma within 0 <= alpha <= 1
-
-
 
         this.random = new Random();
 
@@ -67,16 +64,16 @@ public class QLearning {
         this.rValues = new LinkedHashMap<>();
 
         for( State s : State.values() ){
-            this.rValues.put( s, 0.0 );
+            this.rValues.put( s, 0.0 ); // Immediate rewards for all Q( s, a ) initialised to 0.
 
             LinkedHashMap< Action, Double > actionQ = new LinkedHashMap<>();
             for( Action a : Action.values() ) {
-                actionQ.put( a, 0.0 ); // For each direction, initialise expected Rewards to 0.
+                actionQ.put( a, 0.0 ); // Initialise Q( s, a ) arbitrarily
             }
             this.qValues.put( s, actionQ );
         }
-        this.rValues.put( State.C, 1.0 );
-        this.rValues.put( State.I, -1.0 );
+        this.rValues.put( State.C, 1.0 ); // Specific rewards for reaching terminal states. +1 for Goal.
+        this.rValues.put( State.I, -1.0 ); // And -1 for a bad State.
 
         this.currentState = this.startState;
 
@@ -84,7 +81,6 @@ public class QLearning {
 
     }
 
-    // Q(st,at) = rt+1 + γ maxat+1 Q(st+1,at+1)
     public void run(){
         if( !this.isRunning ){
             this.isRunning = true;
@@ -100,9 +96,11 @@ public class QLearning {
 
                     if ( rand >= this.epsilon ) {
                         // Exploitation
+                        // P( 1 - Epsilon )
                         a = selectActionMax(this.currentState);
                     } else {
                         // Exploration
+                        // P( Epsilon )
                         a = selectActionAtRandom();
                     }
 
@@ -116,7 +114,8 @@ public class QLearning {
                     double updatedQ = currentQ + this.alpha*( immediateReward + ( this.gamma * maxQValue ) - currentQ );
                     setQ( this.currentState, a, updatedQ );
 
-                    annealEpsilon();
+                    annealEpsilon(); // This allows for the slow transition from more exploration to more exploitation
+                    // As we wish to begin exploiting once we have enough exploration done.
 
                     this.currentState = nextS; // s <- s'
                 }
@@ -139,9 +138,6 @@ public class QLearning {
     private void annealEpsilon(){
         if( this.epsilon > this.final_epsilon ) {
             this.epsilon -= this.annealRate;
-        }
-        if( this.alpha - ( 0.5 / this.episodes ) > 0 ) {
-            this.alpha -= ( 0.5 / this.episodes );
         }
     }
 
